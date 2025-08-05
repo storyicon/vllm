@@ -1743,6 +1743,18 @@ class GPUModelRunner(LoRAModelRunnerMixin, KVConnectorModelRunnerMixin):
 
         self.eplb_step()
 
+        # Note: This is only the hidden states for the current token
+        # To get all tokens' hidden states, we need to accumulate them across calls
+        hidden_states_return = None
+        if hidden_states is not None:
+            server_allows_hidden_states = self.vllm_config.model_config.allow_return_hidden_states
+            if server_allows_hidden_states:
+                if isinstance(hidden_states, torch.Tensor):
+                    split_hidden_states = list(
+                        torch.split(hidden_states[:num_scheduled_tokens],
+                                  num_scheduled_tokens_np.tolist()))
+                    hidden_states_return = [hs.cpu() for hs in split_hidden_states]
+
         return ModelRunnerOutput(
             req_ids=self.input_batch.req_ids,
             req_id_to_index=self.input_batch.req_id_to_index,
@@ -1753,6 +1765,7 @@ class GPUModelRunner(LoRAModelRunnerMixin, KVConnectorModelRunnerMixin):
             pooler_output=[],
             kv_connector_output=kv_connector_output,
             num_nans_in_logits=num_nans_in_logits,
+            hidden_states=hidden_states_return,
         )
 
     def propose_draft_token_ids(

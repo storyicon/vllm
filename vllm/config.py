@@ -485,6 +485,11 @@ class ModelConfig:
     - "transformers" will use the Transformers model implementation."""
     override_attention_dtype: Optional[str] = None
     """Override dtype for attention"""
+    
+    allow_return_hidden_states: bool = False
+    """Whether to allow returning hidden states in API responses. 
+    When False, hidden_states will not be processed or returned regardless of 
+    individual request settings."""
 
     def compute_hash(self) -> str:
         """

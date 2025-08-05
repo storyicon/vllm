@@ -93,6 +93,7 @@ class RequestState:
         arrival_time: float,
         queue: Optional[RequestOutputCollector],
         log_stats: bool,
+        sampling_params: Optional[Any] = None,
     ):
         self.request_id = request_id
         self.parent_req = parent_req
@@ -110,6 +111,16 @@ class RequestState:
 
         self.stats = RequestStateStats(
             arrival_time=arrival_time) if log_stats else None
+        
+        # Accumulate hidden states for all tokens
+        self.accumulated_hidden_states: list[list[float]] = []
+        
+        # Whether to return hidden states (check both server config and request params)
+        self.return_hidden_states = False
+        if sampling_params:
+            # We need to check server config here, but we don't have access to it
+            # This will be checked in the actual processing logic
+            self.return_hidden_states = sampling_params.return_hidden_states
 
     @classmethod
     def from_new_request(
@@ -158,6 +169,7 @@ class RequestState:
             arrival_time=request.arrival_time,
             queue=queue,
             log_stats=log_stats,
+            sampling_params=sampling_params,
         )
 
     def make_request_output(
@@ -168,13 +180,21 @@ class RequestState:
         stop_reason: Union[int, str, None],
         kv_transfer_params: Optional[dict[str, Any]] = None,
         num_cached_tokens: int = 0,
+        hidden_states: Optional[list[list[float]]] = None,
     ) -> Optional[Union[RequestOutput, PoolingRequestOutput]]:
 
         finished = finish_reason is not None
         final_only = self.output_kind == RequestOutputKind.FINAL_ONLY
 
+        # Always accumulate hidden states if return_hidden_states is True, even in FINAL_ONLY mode
+        if hidden_states is not None and self.return_hidden_states:
+            # hidden_states is already a list of lists (from current token)
+            # Add it to our accumulated list
+            self.accumulated_hidden_states.extend(hidden_states)
+
         if not finished and final_only:
             # Only the final output is required in FINAL_ONLY mode.
+            # But we still need to accumulate hidden states for the final response
             return None
 
         request_id = self.request_id
@@ -194,8 +214,13 @@ class RequestState:
             if not outputs:
                 return None
 
+        # Only return accumulated hidden states when the request is finished and return_hidden_states is True
+        accumulated_hidden_states = None
+        if finished and self.return_hidden_states and self.accumulated_hidden_states:
+            accumulated_hidden_states = self.accumulated_hidden_states
+
         return self._new_request_output(request_id, outputs, finished,
-                                        kv_transfer_params, num_cached_tokens)
+                                        kv_transfer_params, num_cached_tokens, accumulated_hidden_states)
 
     def _new_request_output(
         self,
@@ -204,6 +229,7 @@ class RequestState:
         finished: bool,
         kv_transfer_params: Optional[dict[str, Any]] = None,
         num_cached_tokens: int = 0,
+        hidden_states: Optional[list[list[float]]] = None,
     ) -> Union[RequestOutput, PoolingRequestOutput]:
 
         if isinstance(outputs[0], PoolingOutput):
@@ -230,6 +256,7 @@ class RequestState:
             finished=finished,
             kv_transfer_params=kv_transfer_params,
             num_cached_tokens=num_cached_tokens,
+            hidden_states=hidden_states,
         )
 
     def _new_completion_output(
@@ -411,7 +438,7 @@ class OutputProcessor:
             # 4) Create and handle RequestOutput objects.
             if request_output := req_state.make_request_output(
                     new_token_ids, pooling_output, finish_reason, stop_reason,
-                    kv_transfer_params, num_cached_tokens):
+                    kv_transfer_params, num_cached_tokens, engine_core_output.hidden_states):
                 if req_state.queue is not None:
                     # AsyncLLM: put into queue for handling by generate().
                     req_state.queue.put(request_output)

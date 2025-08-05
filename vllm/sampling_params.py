@@ -226,6 +226,9 @@ class SamplingParams(
     # Fields used for bad words
     bad_words: Optional[list[str]] = None
     _bad_words_token_ids: Optional[list[list[int]]] = None
+    
+    # Whether to return hidden states in the response
+    return_hidden_states: bool = False
 
     @staticmethod
     def from_optional(
@@ -259,6 +262,7 @@ class SamplingParams(
         logit_bias: Optional[Union[dict[int, float], dict[str, float]]] = None,
         allowed_token_ids: Optional[list[int]] = None,
         extra_args: Optional[dict[str, Any]] = None,
+        return_hidden_states: bool = False,
     ) -> "SamplingParams":
         if logit_bias is not None:
             # Convert token_id to integer
@@ -301,6 +305,7 @@ class SamplingParams(
             logit_bias=logit_bias,
             allowed_token_ids=allowed_token_ids,
             extra_args=extra_args,
+            return_hidden_states=return_hidden_states,
         )
 
     def __post_init__(self) -> None:

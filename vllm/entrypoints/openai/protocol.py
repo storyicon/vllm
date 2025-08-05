@@ -426,6 +426,7 @@ class ChatCompletionRequest(OpenAIBaseModel):
     prompt_logprobs: Optional[int] = None
     allowed_token_ids: Optional[list[int]] = None
     bad_words: list[str] = Field(default_factory=list)
+    return_hidden_states: Optional[bool] = None
     # --8<-- [end:chat-completion-sampling-params]
 
     # --8<-- [start:chat-completion-extra-params]
@@ -694,6 +695,7 @@ class ChatCompletionRequest(OpenAIBaseModel):
             bad_words= self.bad_words,
             allowed_token_ids=self.allowed_token_ids,
             extra_args=extra_args or None,
+            return_hidden_states=self.return_hidden_states if self.return_hidden_states is not None else False,
         )
 
     def _get_guided_json_from_tool(
@@ -960,6 +962,7 @@ class CompletionRequest(OpenAIBaseModel):
     truncate_prompt_tokens: Optional[Annotated[int, Field(ge=1)]] = None
     allowed_token_ids: Optional[list[int]] = None
     prompt_logprobs: Optional[int] = None
+    return_hidden_states: Optional[bool] = None
     # --8<-- [end:completion-sampling-params]
 
     # --8<-- [start:completion-extra-params]
@@ -1179,6 +1182,7 @@ class CompletionRequest(OpenAIBaseModel):
             logit_bias=self.logit_bias,
             allowed_token_ids=self.allowed_token_ids,
             extra_args=extra_args or None,
+            return_hidden_states=self.return_hidden_states if self.return_hidden_states is not None else False,
             )
 
     @model_validator(mode="before")
@@ -1666,6 +1670,8 @@ class ChatCompletionResponse(OpenAIBaseModel):
     prompt_logprobs: Optional[list[Optional[dict[int, Logprob]]]] = None
     kv_transfer_params: Optional[dict[str, Any]] = Field(
         default=None, description="KVTransfer parameters.")
+    hidden_states: Optional[list[list[float]]] = Field(
+        default=None, description="Hidden states from model inference.")
 
 
 class DeltaMessage(OpenAIBaseModel):

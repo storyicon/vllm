@@ -115,6 +115,9 @@ class ModelRunnerOutput:
 
     # req_id -> num_nans_in_logits
     num_nans_in_logits: Optional[dict[str, int]] = None
+    
+    # Hidden states from model inference (per request)
+    hidden_states: Optional[list[Optional[torch.Tensor]]] = None
 
 
 EMPTY_MODEL_RUNNER_OUTPUT = ModelRunnerOutput(req_ids=[],
@@ -124,4 +127,5 @@ EMPTY_MODEL_RUNNER_OUTPUT = ModelRunnerOutput(req_ids=[],
                                               logprobs=None,
                                               prompt_logprobs_dict={},
                                               pooler_output=[],
-                                              num_nans_in_logits=None)
+                                              num_nans_in_logits=None,
+                                              hidden_states=None)

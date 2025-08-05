@@ -118,6 +118,7 @@ class RequestOutput:
         *,
         multi_modal_placeholders: Optional[MultiModalPlaceholderDict] = None,
         kv_transfer_params: Optional[dict[str, Any]] = None,
+        hidden_states: Optional[list[list[float]]] = None,
         # Forward compatibility, code that uses args added in new release can
         # still run with older versions of vLLM without breaking.
         **kwargs: Any,
@@ -136,6 +137,7 @@ class RequestOutput:
         self.lora_request = lora_request
         self.encoder_prompt = encoder_prompt
         self.encoder_prompt_token_ids = encoder_prompt_token_ids
+        self.hidden_states = hidden_states
         self.num_cached_tokens = num_cached_tokens
         self.kv_transfer_params = kv_transfer_params
 

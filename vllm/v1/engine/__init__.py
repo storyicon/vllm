@@ -117,6 +117,9 @@ class EngineCoreOutput(
 
     # The number of tokens with prefix cache hits.
     num_cached_tokens: int = 0
+    
+    # Hidden states from model inference (as list for serialization)
+    hidden_states: Optional[list[list[float]]] = None
 
     @property
     def finished(self) -> bool:

@@ -1158,6 +1158,7 @@ class OpenAIServingChat(OpenAIServing):
             usage=usage,
             prompt_logprobs=clamp_prompt_logprobs(final_res.prompt_logprobs),
             kv_transfer_params=final_res.kv_transfer_params,
+            hidden_states=final_res.hidden_states if final_res.hidden_states is not None else None,
         )
 
         return response

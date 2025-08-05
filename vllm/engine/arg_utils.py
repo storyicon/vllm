@@ -431,6 +431,7 @@ class EngineArgs:
         get_field(ModelConfig, "override_generation_config")
     model_impl: str = ModelConfig.model_impl
     override_attention_dtype: str = ModelConfig.override_attention_dtype
+    allow_return_hidden_states: bool = ModelConfig.allow_return_hidden_states
 
     calculate_kv_scales: bool = CacheConfig.calculate_kv_scales
 
@@ -558,6 +559,8 @@ class EngineArgs:
                                  **model_kwargs["model_impl"])
         model_group.add_argument("--override-attention-dtype",
                                  **model_kwargs["override_attention_dtype"])
+        model_group.add_argument("--allow-return-hidden-states",
+                                 **model_kwargs["allow_return_hidden_states"])
 
         # Model loading arguments
         load_kwargs = get_kwargs(LoadConfig)
@@ -931,6 +934,7 @@ class EngineArgs:
             enable_sleep_mode=self.enable_sleep_mode,
             model_impl=self.model_impl,
             override_attention_dtype=self.override_attention_dtype,
+            allow_return_hidden_states=self.allow_return_hidden_states,
         )
 
     def validate_tensorizer_args(self):

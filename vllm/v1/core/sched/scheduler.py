@@ -868,6 +868,8 @@ class Scheduler(SchedulerInterface):
                         events=request.take_events(),
                         kv_transfer_params=kv_transfer_params,
                         num_cached_tokens=request.num_cached_tokens,
+                        hidden_states=self._get_hidden_states_for_request(
+                            model_runner_output, request),
                     ))
 
             else:
@@ -953,6 +955,28 @@ class Scheduler(SchedulerInterface):
                 # in the decoder's KV cache.
                 self.encoder_cache_manager.free_encoder_input(
                     request, input_id)
+
+    def _get_hidden_states_for_request(
+        self,
+        model_runner_output: ModelRunnerOutput,
+        request: Request,
+    ) -> Optional[list]:
+        if model_runner_output.hidden_states is None:
+            return None
+        request_index = model_runner_output.req_id_to_index.get(request.request_id)
+        if request_index is None:
+            return None
+        if (request_index >= len(model_runner_output.hidden_states) or 
+            model_runner_output.hidden_states[request_index] is None):
+            return None
+        if request.sampling_params is None or not request.sampling_params.return_hidden_states:
+            return None
+        if not self.vllm_config.model_config.allow_return_hidden_states:
+            return None
+        hidden_states_tensor = model_runner_output.hidden_states[request_index]
+        if hidden_states_tensor is not None:
+            return hidden_states_tensor.tolist()
+        return None
 
     def get_request_counts(self) -> tuple[int, int]:
         """Returns (num_running_reqs, num_waiting_reqs)."""
