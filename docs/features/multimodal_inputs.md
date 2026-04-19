@@ -787,7 +787,7 @@ When you extract video frames on the client side and send them as `video/jpeg` (
 **Supported Parameters:**
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
+| --------- | ---- | ----------- |
 | `fps` | float | Frame rate of the original video |
 | `frames_indices` | list[int] | Indices of the actually sampled frames |
 | `total_num_frames` | int | Total frame count of the original video |

@@ -96,8 +96,10 @@ class VideoMediaIO(MediaIO[tuple[npt.NDArray, dict[str, Any]]]):
             # validate and extract frames_indices
             frames_indices = self.kwargs.get("frames_indices")
             if frames_indices is not None:
-                if not (isinstance(frames_indices, list)
-                        and all(isinstance(i, int) for i in frames_indices)):
+                if not (
+                    isinstance(frames_indices, list)
+                    and all(isinstance(i, int) for i in frames_indices)
+                ):
                     raise ValueError("frames_indices must be a list of integers")
                 if len(frames_indices) != total:
                     raise ValueError(
